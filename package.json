@@ -6,8 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "node --import=tsx --watch ./src/server/index.ts",
-    "prisma-pull": "npx prisma db pull",
-    "prisma-push": "npx prisma db push"
+    "pull": "npx prisma db pull",
+    "push": "npx prisma db push",
+    "migrate": "npx prisma migrate dev"
 },
   "keywords": [],
   "author": "",
