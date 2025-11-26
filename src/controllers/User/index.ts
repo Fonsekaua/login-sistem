@@ -48,7 +48,7 @@ export const editUser: RequestHandler = async (req, res) => {
         res.status(404).send("User not found");
         return; 
     }
-    
+
     res.status(200).json(User);
     
 }
@@ -60,4 +60,11 @@ export const deleteUser: RequestHandler = async (req, res) => {
         return; 
     }
     res.status(200).json(User);
+}
+
+export const loginUser:RequestHandler = async (req,res) => {
+    res.json({
+        user:req.user,
+        auth: req.authInfo
+    })
 }

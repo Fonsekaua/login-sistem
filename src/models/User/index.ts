@@ -37,6 +37,23 @@ export const getUserByEmail = async (email: string) => {
 }
 
 }
+
+export const findUserByEmailAndPassword = async (email: string, password:string) => {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { email,password},
+            select: {
+                id: true,
+                name: true,
+                email: true
+            }
+        })
+        return user;
+}   catch (error) { 
+        return error;
+}
+
+}
 export const editUserById = async (id: number, data: Prisma.UserUpdateInput) => {
     try {
          const user = await prisma.user.update({
