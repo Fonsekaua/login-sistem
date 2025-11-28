@@ -1,9 +1,10 @@
 import { Strategy as LocalStrategy } from "passport-local"
 import { RequestHandler } from "express";
 import passport from "passport";
-import { User } from "@prisma/client";
-import { findUserByEmailAndPassword } from "../../models/User/index.js";
+import { Prisma, User } from "@prisma/client";
+import { findUserByEmail } from "../../models/User/index.js";
 import { createUserJwt } from "../../services/User/index.js";
+import bcrypt from "bcryptjs";
 
 type LocalStrategyResponse = {
     auth: {
@@ -16,22 +17,29 @@ export const localStrategy = new LocalStrategy({
     usernameField: 'email',
     passwordField: 'password'
 }, async (email, password, done) => {
-    console.log('email:', email);
-    console.log('password: ', password);
 
-    const user = await findUserByEmailAndPassword(email, password);
-    if (user) {
-        const token = createUserJwt(user as User);
+    // busca só o usuário com a senha
+    const user = await findUserByEmail(email) as Prisma.UserGetPayload<{
+        select: { id: true; name: true; email: true; role:true; password: true; }
+    }>;
 
-        const response: LocalStrategyResponse = {
-            auth: { token : await token },
-            user : user as User
-        }
-        return done(null, response);
-    } else {
-        return done(null, false)
-    }
-})
+    if (!user) return done(null, false);
+
+    // compara senha
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return done(null, false);
+
+    // Cria token
+    const token = await createUserJwt(user as User);
+
+    // Retorna usuário sem a senha
+    const { password: _, ...userWithoutPassword } = user;
+
+    return done(null, {
+        auth: { token },
+        user: userWithoutPassword
+    });
+});
 
 export const localStrategyAuth: RequestHandler = (req, res, next) => {
     const authRequest = passport.authenticate('local',

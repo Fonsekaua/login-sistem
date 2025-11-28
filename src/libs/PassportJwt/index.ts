@@ -5,6 +5,7 @@ import { ExtractJwt, Strategy as JwtStrategy } from "passport-jwt";
 import { getUserByEmail } from "../../models/User/index.js";
 const dotenv = await import('dotenv');
 dotenv.config();
+
 const options = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     secretOrKey: process.env.JWT_SECRET as string

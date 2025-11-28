@@ -1,5 +1,6 @@
 import { Prisma, User } from "@prisma/client";
 import { prisma } from "../../libs/Prisma/index.js";
+import bcrypt from "bcryptjs";
 
 export const createUser = async (data: Prisma.UserCreateInput) => {
     try {
@@ -12,9 +13,39 @@ export const createUser = async (data: Prisma.UserCreateInput) => {
         return error;
     }
 }
+export const createUsers = async (data: Prisma.UserCreateManyInput[]) => {
+  try {
+    // hash de todas as senhas
+    const usersWithHashedPasswords = await Promise.all(
+      data.map(async (user) => ({
+        name: user.name,
+        email: user.email,
+        password: await bcrypt.hash(user.password as string, 10),
+        role: user.role ?? "Visitant"
+      }))
+    );
+
+    // cria todos os usuários
+    const result = await prisma.user.createMany({
+      data: usersWithHashedPasswords,
+      skipDuplicates: true
+    });
+
+    return result; // { count: X }
+  } catch (error) {
+    return error;
+  }
+};
 export const getAllUsers = async () => {
     try {
-        const users = await prisma.user.findMany();
+        const users = await prisma.user.findMany({
+        select: {
+            name: true,
+            email: true,
+            password: true,
+            role: true
+        }
+    });
         return users;
     } catch (error) {
 
@@ -24,11 +55,12 @@ export const getAllUsers = async () => {
 export const getUserByEmail = async (email: string) => {
     try {
         const user = await prisma.user.findUnique({
-            where: { email},
+            where: { email },
             select: {
                 id: true,
                 name: true,
-                email: true
+                email: true,
+                password:true
             }
         })
         return user;
@@ -38,14 +70,16 @@ export const getUserByEmail = async (email: string) => {
 
 }
 
-export const findUserByEmailAndPassword = async (email: string, password:string) => {
+export const findUserByEmail = async (email: string) => {
     try {
         const user = await prisma.user.findUnique({
-            where: { email,password},
+            where: { email},
             select: {
                 id: true,
                 name: true,
-                email: true
+                email: true,
+                role:true,
+                password: true
             }
         })
         return user;
@@ -75,6 +109,15 @@ export const deleteUserById = async (id: number) => {
                 id
             }
         })
+        return user;
+    } catch (error) {
+        return error;
+    }
+}
+
+export const deleteAllUsers = async () => {
+    try {
+        const user = prisma.user.deleteMany();
         return user;
     } catch (error) {
         return error;
